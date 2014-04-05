@@ -1,0 +1,19 @@
+{
+    "name": "news-on-glass",
+    "version": "0.0.1",
+    "private": true,
+    "author": "hadimichael@gmail.com",
+    "bugs": "hadimichael@gmail.com",
+    "contributors": "hadimichael@gmail.com",
+    "keywords": ["glass", "mirror api", "news"],
+    "scripts": {
+        "start": "node app.js"
+    },
+    "dependencies": {
+        "express": "3.5.1",
+        "googleapis": "0.7.0"
+    },
+    "engines": {
+        "node": "0.10.26"
+    }
+}
