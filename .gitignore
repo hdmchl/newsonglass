@@ -1,7 +1,43 @@
-.idea
-.idea/*
-*.iml
-*swp
+### project specific ###
+app_credentials.js
+
+### Node.js ###
+# Logs
+logs
+*.log
+
+# Runtime data
+pids
+*.pid
+*.seed
+
+# Grunt intermediate storage (http://gruntjs.com/creating-plugins#storing-task-files)
+.grunt
+
+# Compiled binary addons (http://nodejs.org/api/addons.html)
+build/Release
+
+# Dependency directory
 node_modules
-config.json
-node.pid
+
+### Mac files ###
+*.DS_Store
+*.AppleDouble
+*.LSOverride
+
+# Icon must ends with two \r.
+Icon
+
+
+# Thumbnails
+._*
+
+# Files that might appear on external disk
+*.Spotlight-V100
+*.Trashes
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
