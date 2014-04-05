@@ -1,6 +1,9 @@
 ### project specific ###
 app_credentials.js
 
+#the front-end grunt project will create a 'public' folder that contains the webapp
+public
+
 ### Node.js ###
 # Logs
 logs
