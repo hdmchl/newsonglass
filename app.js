@@ -11,7 +11,7 @@ var appName         = 'NewsOnGlass',
     server          = http.createServer(app),
     googleapis      = require('googleapis'),
     OAuth2Client    = googleapis.OAuth2Client,
-    app_creds       = require('./server/app_credentials'), //see app_credentials__template.js
+    app_creds       = require('./server/app_credentials'); //see app_credentials__template.js
 
 /***** HANDLE Uncaught Exceptions *****/
 process.on('uncaughtException', function(err) {
