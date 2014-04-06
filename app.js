@@ -17,12 +17,14 @@ process.on('uncaughtException', function(err) {
     console.error(err.stack);
 });
 
-//default success/failure callbacks
+//default success/failure callbacks - useful for Dev
 var success = function (data) {
     console.error('success', data);
 };
+
 var failure = function (data) {
     console.error('failure', data);
+    res.send(500, 'Uh, oh. Something broke on the server!');
 };
 /***** /HANDLE Uncaught Exceptions *****/
 
@@ -40,7 +42,7 @@ var grabToken = function (code, errorCallback, successCallback) {
     });
 };
 
-var getUser = function (session_oauth2Client, errorCallback, successCallback) {
+var getUser = function (_oauth2Client, errorCallback, successCallback) {
     googleapis
         .discover('oauth2', 'v2')
         .execute(function (err, client) {
@@ -51,7 +53,7 @@ var getUser = function (session_oauth2Client, errorCallback, successCallback) {
 
             client
                 .oauth2.userinfo.get()
-                .withAuthClient(session_oauth2Client)
+                .withAuthClient(_oauth2Client)
                 .execute(function(err, results){
                     if (!!err) {
                         errorCallback(err);
@@ -76,19 +78,10 @@ app.configure(function() {
     app.use(express.session(appCreds.get().sessionParams));
 });
 
-// define routes manually
+// define manual route overrides
 app.get('/login', function (req, res) {
     if ('credentials' in req.session && req.session.credentials != null) {
-        if ('user' in req.session && req.session.user != null) {
-            res.redirect('/user/'+req.session.user.id);
-        } else {
-            oauth2Client.credentials = req.session.credentials; //apply credentials
-            getUser(oauth2Client, failure, function (user) {
-                req.session.user = results; //store the user in the current session
-
-                res.redirect('/user/' + user.id);
-            });
-        }
+        res.redirect('/');
     } else {
         //if we don't have session credentials, go fetch them from Google
         var url = oauth2Client.generateAuthUrl({
@@ -102,13 +95,7 @@ app.get('/login', function (req, res) {
 app.get('/oauth2callback', function (req, res) {
     grabToken(req.query.code, failure, function (tokens) {
         req.session.credentials = tokens; //this will get store in a server-side session - http://stackoverflow.com/questions/14524774/expressjs-how-does-req-session-work
-
-        oauth2Client.credentials = req.session.credentials; //apply credentials
-        getUser(oauth2Client, failure, function (user) {
-            req.session.user = user; //store the user in the current session
-
-            res.redirect('/user/' + user.id);
-        });
+        res.redirect('/');
     });
 });
 
@@ -117,7 +104,9 @@ app.get('/logout', function (req, res) {
     res.redirect('/');
 });
 
+//define API
 app.get('/user', function (req, res) {
+    //return the user's profile
     if ('user' in req.session && req.session.user != null) {
         res.send({
             user: req.session.user
@@ -134,20 +123,16 @@ app.get('/user', function (req, res) {
             });
         });
     } else {
-        res.send(500, 'Uh, oh. Something broke!');
+        res.send(500, 'Authentication needed');
     }
 });
 
-app.get('/user/:id', function (req, res) {
-    res.send('user ' + req.params.id);
+app.get('/user/:id/preferences', function (req, res) {
+    //return saved preferences for req.params.id
 });
 
-app.get('/user/:id/subscriptions', function (req, res) {
-
-});
-
-app.post('/user/:id/subscriptions', function (req, res) {
-
+app.post('/user/:id/preferences', function (req, res) {
+    //update saved preferences for req.params.id
 });
 
 // start the server
