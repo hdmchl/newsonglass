@@ -1,16 +1,43 @@
 <div class="header">
-  <ul class="nav nav-pills pull-right">
-    <li><a ng-href="#/">Home</a></li>
-    <li class="active"><a ng-href="#/mynews">My News</a></li>
-    <li><a ng-href="http://www.github.com/hadimichael">Source</a></li>
-  </ul>
-  <h3 class="text-muted">News on Glass</h3>
+    <ul class="nav nav-pills pull-right">
+        <li><a ng-href="#/">Home</a></li>
+        <li class="active"><a ng-href="#/mynews">My News</a></li>
+        <li><a ng-href="http://www.github.com/hadimichael">Source</a></li>
+    </ul>
+    <h3 class="text-muted">News on Glass</h3>
 </div>
 
 <div class="row marketing">
-  <p>Content will come here</p>
+    <h1>Preferences</h1>
+    <form>
+        <div class="row">
+            <div class="col-sm-6">
+                <h2>Topics</h2>
+                <div class="checkbox" ng-repeat="topic in topics">
+                    <label>
+                        <input type="checkbox" value="{{topic.id}}">{{topic.label}}
+                    </label>
+                </div>
+            </div>
+
+            <div class="col-sm-6">
+                <h2>Frequency</h2>
+                <div class="radio" ng-repeat="freq in preferences.freq">
+                    <label>
+                        <input type="radio" name="optionsRadios" id="{{freq.label}}" value="{{freq.id}}">
+                        {{freq.label}}
+                    </label>
+                </div>
+            </div>
+        </div>
+
+        <div class="row">
+            <button type="button" class="btn btn-link">Cancel</button>
+            <button type="button" class="btn btn-success">Subscribe</button>
+        </div>
+    </form>
 </div>
 
 <div class="footer">
-  <p>Made with by <a href="http://twitter.com/hadi_michael">@hadi_michael</a></p>
+    <p>Made with by <a href="http://twitter.com/hadi_michael">@hadi_michael</a></p>
 </div>
