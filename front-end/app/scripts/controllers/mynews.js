@@ -34,10 +34,12 @@ angular.module('newsApp')
     });
 
     $scope.submitForm = function() {
-      for (var i in $scope.preferences.freq) {
-        $scope.preferences.freq[i].selected = false;
+      if ($scope.formData.freq) {
+        for (var i in $scope.preferences.freq) {
+          $scope.preferences.freq[i].selected = false;
+        }
+        $scope.preferences.freq[$scope.formData.freq].selected = true;
       }
-      $scope.preferences.freq[$scope.formData.freq].selected = true;
 
       Preferences.postPreferences($scope.user.id, $scope.preferences).then(function() {
         $route.reload();
