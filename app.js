@@ -10,9 +10,10 @@ var appName         = 'NewsOnGlass',
     http            = require('http'),
     server          = http.createServer(app),
     googleapis      = require('googleapis'),
-    appCreds        = require('./server/appCredentials'); //see appCredentials__template.js
+    appCreds        = require('./server/appCredentials'), //see appCredentials__template.js
+    schedule        = require('node-schedule');
 
-if (typeof localStorage === "undefined" || localStorage === null) {
+if (typeof localStorage === 'undefined' || localStorage === null) {
     var LocalStorage = require('node-localstorage').LocalStorage;
     localStorage = new LocalStorage('./scratch');
     /* localStorage API: https://www.npmjs.org/package/node-localstorage
@@ -119,11 +120,19 @@ app.get('/logout', function (req, res) {
     res.redirect('/');
 });
 
+app.get('/insertHello', function (req, res) {
+
+
+    insertHello(failure, success);
+    res.end();
+});
+
 //define API
 app.get('/user', function (req, res) {
+    res.setHeader('Content-Type', 'application/json');
     //return the user's profile
     if ('user' in req.session && req.session.user != null) {
-        res.send({
+        res.json({
             user: req.session.user
         });
     } else if ('credentials' in req.session && req.session.credentials != null) {
@@ -133,7 +142,7 @@ app.get('/user', function (req, res) {
             req.session.user = user; //store the user in the current session
 
             //*** RETURN user's id ***//
-            res.send({
+            res.json({
                 user: user
             });
         });
@@ -166,6 +175,70 @@ app.post('/user/:id/preferences', function (req, res) {
 
         try {
             localStorage.setItem(req.params.id, JSON.stringify(prefs));
+
+            //**** CREATE SCHEDULER to insert news stories to Google Glass timeline ****//
+                //TODO: move this code into a separate file...
+                var perform = function (errorCallback, successCallback) {
+                    googleapis
+                        .discover('mirror', 'v1')
+                        .execute(function (err, client) {
+                            if (!!err)
+                                errorCallback(err);
+                            else
+                                successCallback(client);
+                        });
+                };
+
+                // send a simple news story timeline card with a delete option
+                var insertStory = function (title, errorCallback, successCallback) {
+                    oauth2Client.credentials = req.session.credentials; //apply credentials
+
+                    perform(errorCallback, function(client) {
+                        client
+                            .mirror.timeline.insert(
+                                {
+                                    'text': title,
+                                    'menuItems': [
+                                        {'action': 'DELETE'}
+                                    ]
+                                }
+                            )
+                            .withAuthClient(oauth2Client)
+                            .execute(function (err, data) {
+                                if (!!err)
+                                    errorCallback(err);
+                                else
+                                    successCallback(data);
+                            });
+                    });
+                };
+
+                //scheduler docs: https://github.com/mattpat/node-schedule
+                var j = schedule.scheduleJob(prefs.freq, function() {
+                    var url = 'http://ajax.googleapis.com/ajax/services/feed/load?v=2.0&q=http://www.theverge.com/rss/frontpage&num=1';
+
+                    http.get(url, function(res) {
+                        var response = '';
+                        res.on('data', function (chunk) {
+                            //another chunk of data has been recieved, so append it to `response`
+                            response += chunk;
+                        });
+                        res.on('end', function () {
+                            //the whole response has been recieved
+                            try {
+                                response = JSON.parse(response);
+                                console.log('story', response.responseData.feed.entries[0].title);
+                                insertHello(response.responseData.feed.entries[0].title,failure,success);
+                            } catch(e) {
+                                failure(e);
+                            }
+                        });
+                    }).on('error', function(e) {
+                        failure(e);
+                    });
+                });
+            //**** /CREATE SCHEDULER to insert news stories to Google Glass timeline ****//
+
             res.send(prefs || {});
         } catch (e) {
             res.send('Saving error:', e);
