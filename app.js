@@ -129,6 +129,10 @@ app.get('/user', function (req, res) {
 
 app.get('/user/:id/preferences', function (req, res) {
     //return saved preferences for req.params.id
+    res.send({
+        topics: [''],
+        frequency: 60*60*1
+    });
 });
 
 app.post('/user/:id/preferences', function (req, res) {
