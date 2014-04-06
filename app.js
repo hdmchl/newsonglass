@@ -12,6 +12,20 @@ var appName         = 'NewsOnGlass',
     googleapis      = require('googleapis'),
     appCreds        = require('./server/appCredentials'); //see appCredentials__template.js
 
+if (typeof localStorage === "undefined" || localStorage === null) {
+    var LocalStorage = require('node-localstorage').LocalStorage;
+    localStorage = new LocalStorage('./scratch');
+    /* localStorage API: https://www.npmjs.org/package/node-localstorage
+        length
+        setItem(key, value)
+        getItem(key)
+        removeItem(key)
+        key(n)
+        clear()
+    */
+    localStorage.clear();
+}
+
 /***** HANDLE Uncaught Exceptions *****/
 process.on('uncaughtException', function(err) {
     console.error(err.stack);
@@ -70,12 +84,13 @@ var getUser = function (_oauth2Client, errorCallback, successCallback) {
 app.configure(function() {
     app.use(express.bodyParser());
     app.use(express.cookieParser());
+    app.use(express.session(appCreds.get().sessionParams));
     app.use(express.static(__dirname + '/public'));
     app.use(express.errorHandler({
         dumpExceptions: true,
         showStack: true
     }));
-    app.use(express.session(appCreds.get().sessionParams));
+    app.use(app.router);
 });
 
 // define manual route overrides
@@ -86,7 +101,7 @@ app.get('/login', function (req, res) {
         //if we don't have session credentials, go fetch them from Google
         var url = oauth2Client.generateAuthUrl({
             access_type: 'offline',
-            scope: 'https://www.googleapis.com/auth/userinfo.profile'
+            scope: 'https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/glass.timeline'
         });
         res.redirect(url);
     }
@@ -129,14 +144,35 @@ app.get('/user', function (req, res) {
 
 app.get('/user/:id/preferences', function (req, res) {
     //return saved preferences for req.params.id
-    res.send({
-        topics: [''],
-        frequency: 60*60*1
-    });
+    if ('credentials' in req.session && req.session.credentials != null && 'user' in req.session && req.session.user.id === req.params.id) {
+        try {
+            var prefs = JSON.parse(localStorage.getItem(req.params.id));
+            res.send(prefs || {});
+        } catch (e) {
+            res.send('Parsing error:', e);
+        }
+    } else {
+        res.send(500, 'Authentication needed');
+    }
 });
 
 app.post('/user/:id/preferences', function (req, res) {
     //update saved preferences for req.params.id
+    if ('credentials' in req.session && req.session.credentials != null && 'user' in req.session && req.session.user.id === req.params.id) {
+        var prefs = {
+          id: req.params.id,
+          freq: req.body.freq
+        };
+
+        try {
+            localStorage.setItem(req.params.id, JSON.stringify(prefs));
+            res.send(prefs || {});
+        } catch (e) {
+            res.send('Saving error:', e);
+        }
+    } else {
+        res.send(500, 'Authentication needed');
+    }
 });
 
 // start the server
@@ -147,4 +183,4 @@ try {
 } catch (err) {
     console.error('Server didn\'t start: \n' + err);
 }
-/***** /SETUP AND START SERVER *****/
+/***** /SETUP AND START SERVER ****/

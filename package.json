@@ -11,7 +11,8 @@
     },
     "dependencies": {
         "express": "3.5.1",
-        "googleapis": "0.7.0"
+        "googleapis": "0.7.0",
+        "node-localstorage": ""
     },
     "engines": {
         "node": "0.10.26"
