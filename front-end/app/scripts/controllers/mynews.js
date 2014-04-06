@@ -2,7 +2,9 @@
 
 angular.module('newsApp')
   .controller('MynewsCtrl', function ($scope, User, Preferences) {
-    //TODO: this is just a stub for topics... it doesn't do anything yet.
+    $scope.formData = {};
+
+    //TODO: this is just a stub for topics... doesn't do much yet.
     $scope.topics = [
       {
         id: 0,
@@ -18,27 +20,26 @@ angular.module('newsApp')
       },
     ];
 
-    // $scope.preferences = User.getUser().then(function(data) {
-    //   return Preferences.getPreferences(data.user.id);
-    // });
-
+    //set up preferences
     $scope.preferences = {
-      freq: [
-        {
-          id: 0,
-          label: 'Hourly',
-          rule: {minute:0}
-        },
-        {
-          id: 1,
-          label: 'Daily',
-          rule: {hour:8}
-        },
-        {
-          id: 2,
-          label: 'Often',
-          rule: {second:10}
-        }
-      ]
+      freq: []
+    };
+
+    //get user and preferences
+    User.getUser().then(function(response) {
+      $scope.user = response.user;
+      Preferences.getPreferences(response.user.id).then(function(response) {
+        $scope.preferences = response.data;
+      });
+    });
+
+    $scope.submitForm = function() {
+      for (var i in $scope.preferences.freq) {
+        $scope.preferences.freq[i].selected = false;
+      }
+      $scope.preferences.freq[$scope.formData.freq].selected = true;
+
+      console.log('POST', $scope.preferences);
+      Preferences.postPreferences($scope.user.id, $scope.preferences);
     };
   });
