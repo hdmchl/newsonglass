@@ -39,7 +39,6 @@ var success = function (data) {
 
 var failure = function (data) {
     console.error('failure', data);
-    res.send(500, 'Uh, oh. Something broke on the server!');
 };
 /***** /HANDLE Uncaught Exceptions *****/
 
@@ -97,7 +96,7 @@ app.configure(function() {
 // define manual route overrides
 app.get('/login', function (req, res) {
     if ('credentials' in req.session && req.session.credentials != null) {
-        res.redirect('/');
+        res.redirect('/#/mynews');
     } else {
         //if we don't have session credentials, go fetch them from Google
         var url = oauth2Client.generateAuthUrl({
@@ -111,7 +110,7 @@ app.get('/login', function (req, res) {
 app.get('/oauth2callback', function (req, res) {
     grabToken(req.query.code, failure, function (tokens) {
         req.session.credentials = tokens; //this will get store in a server-side session - http://stackoverflow.com/questions/14524774/expressjs-how-does-req-session-work
-        res.redirect('/');
+        res.redirect('/#/mynews');
     });
 });
 
@@ -155,8 +154,30 @@ app.get('/user/:id/preferences', function (req, res) {
     //return saved preferences for req.params.id
     if ('credentials' in req.session && req.session.credentials != null && 'user' in req.session && req.session.user.id === req.params.id) {
         try {
-            var prefs = JSON.parse(localStorage.getItem(req.params.id));
-            res.send(prefs || {});
+            var prefsModel = {
+                freq: [
+                  {
+                    id: 0,
+                    label: 'Hourly',
+                    rule: {'minute':0},
+                    selected: false
+                  },
+                  {
+                    id: 1,
+                    label: 'Daily',
+                    rule: {'hour':8},
+                    selected: false
+                  },
+                  {
+                    id: 2,
+                    label: 'Often',
+                    rule: {'second':10},
+                    selected: false
+                  }
+                ]
+            },
+                prefs = JSON.parse(localStorage.getItem(req.params.id));
+            res.json(prefs || prefsModel);
         } catch (e) {
             res.send('Parsing error:', e);
         }
@@ -172,7 +193,6 @@ app.post('/user/:id/preferences', function (req, res) {
           id: req.params.id,
           freq: req.body.freq
         };
-
         try {
             localStorage.setItem(req.params.id, JSON.stringify(prefs));
 
@@ -214,7 +234,14 @@ app.post('/user/:id/preferences', function (req, res) {
                 };
 
                 //scheduler docs: https://github.com/mattpat/node-schedule
-                var j = schedule.scheduleJob(prefs.freq, function() {
+                var rule = {hour: 8}; //default rule
+                for (var i in prefs.freq) {
+                    if (prefs.freq[i].selected){
+                        rule = prefs.freq[i].rule;
+                    }
+                }
+                console.log('Creating scheduler for: ', rule);
+                var j = schedule.scheduleJob(rule, function() {
                     var url = 'http://ajax.googleapis.com/ajax/services/feed/load?v=2.0&q=http://www.theverge.com/rss/frontpage&num=1';
 
                     http.get(url, function(res) {
@@ -228,7 +255,7 @@ app.post('/user/:id/preferences', function (req, res) {
                             try {
                                 response = JSON.parse(response);
                                 console.log('story', response.responseData.feed.entries[0].title);
-                                insertHello(response.responseData.feed.entries[0].title,failure,success);
+                                insertStory(response.responseData.feed.entries[0].title,failure,success);
                             } catch(e) {
                                 failure(e);
                             }
@@ -239,7 +266,7 @@ app.post('/user/:id/preferences', function (req, res) {
                 });
             //**** /CREATE SCHEDULER to insert news stories to Google Glass timeline ****//
 
-            res.send(prefs || {});
+            res.json(prefs || {});
         } catch (e) {
             res.send('Saving error:', e);
         }
