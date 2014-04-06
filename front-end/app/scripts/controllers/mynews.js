@@ -1,7 +1,7 @@
 'use strict';
 
 angular.module('newsApp')
-  .controller('MynewsCtrl', function ($scope, User, Preferences) {
+  .controller('MynewsCtrl', function ($scope, $route, User, Preferences) {
     $scope.formData = {};
 
     //TODO: this is just a stub for topics... doesn't do much yet.
@@ -39,7 +39,8 @@ angular.module('newsApp')
       }
       $scope.preferences.freq[$scope.formData.freq].selected = true;
 
-      console.log('POST', $scope.preferences);
-      Preferences.postPreferences($scope.user.id, $scope.preferences);
+      Preferences.postPreferences($scope.user.id, $scope.preferences).then(function() {
+        $route.reload();
+      });
     };
   });
