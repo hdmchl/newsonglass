@@ -218,6 +218,7 @@ app.post('/user/:id/preferences', function (req, res) {
                             .mirror.timeline.insert(
                                 {
                                     'text': title,
+                                    'notification': {},
                                     'menuItems': [
                                         {'action': 'DELETE'}
                                     ]
