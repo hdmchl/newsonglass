@@ -9,9 +9,9 @@
 
 exports.get = function () {
     var sessionParams = {
-        secret: 'YOUR_SESSION_SECRET', //session secret
+        secret: 'YOUR_SESSION_SECRET', // TODO: make up some session secret */
         cookie: {
-            secure: false, //set this to 'true' if you are using HTTPS
+            secure: false, // only set this to 'true' if you are using HTTPS
             maxAge: 60000
         }
     };
