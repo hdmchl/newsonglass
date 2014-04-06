@@ -12,6 +12,10 @@ angular.module('newsApp', [
         templateUrl: 'views/main.html',
         controller: 'MainCtrl'
       })
+      .when('/mynews', {
+        templateUrl: 'views/mynews.html',
+        controller: 'MynewsCtrl'
+      })
       .otherwise({
         redirectTo: '/'
       });
