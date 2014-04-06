@@ -1,5 +1,5 @@
 ### project specific ###
-app_credentials.js
+appCredentials.js
 
 #the front-end grunt project will create a 'public' folder that contains the webapp
 public
