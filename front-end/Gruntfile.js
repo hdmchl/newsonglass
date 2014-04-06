@@ -22,7 +22,7 @@ module.exports = function (grunt) {
     yeoman: {
       // configurable paths
       app: require('./bower.json').appPath || 'app',
-      dist: 'dist'
+      dist: 'public'
     },
 
     // Watches files for changes and runs tasks based on the changed files
@@ -121,7 +121,8 @@ module.exports = function (grunt) {
           ]
         }]
       },
-      server: '.tmp'
+      server: '.tmp',
+      public: '../public'
     },
 
     // Add vendor prefixed styles
@@ -299,6 +300,10 @@ module.exports = function (grunt) {
         cwd: '<%= yeoman.app %>/styles',
         dest: '.tmp/styles/',
         src: '{,*/}*.css'
+      },
+      toPublic: {
+        dest: '../',
+        src: '<%= yeoman.dist %>//**'
       }
     },
 
@@ -403,4 +408,10 @@ module.exports = function (grunt) {
     'test',
     'build'
   ]);
+
+  grunt.registerTask('deploy', [
+    'build',
+    'copy:toPublic'
+  ]);
+
 };
