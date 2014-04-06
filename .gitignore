@@ -1,5 +1,6 @@
 ### project specific ###
 appCredentials.js
+/scratch
 
 #the front-end grunt project will create a 'public' folder that contains the webapp
 public
