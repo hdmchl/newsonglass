@@ -40,7 +40,12 @@ module.exports = function (googleapis) {
                         list: [Function],
                         patch: [Function],
                         update: [Function],
-                        attachments: [Object]
+                        attachments: {
+                            delete: [Function],
+                            get: [Function],
+                            insert: [Function],
+                            list: [Function],
+                        }
                     }
                     ...
                 }
