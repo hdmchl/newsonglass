@@ -11,30 +11,30 @@ var appName         = 'NewsOnGlass',
     server          = http.createServer(app),
     googleapis      = require('googleapis'),
     appCreds        = require('./server/appCredentials'), //see appCredentials__template.js
-    schedule        = require('node-schedule');
+    LocalStorage    = require('node-localstorage').LocalStorage,
+    localStorage    = new LocalStorage('./scratch'),
+    glass           = require('./server/submodules/glass')(googleapis);
 
-if (typeof localStorage === 'undefined' || localStorage === null) {
-    var LocalStorage = require('node-localstorage').LocalStorage;
-    localStorage = new LocalStorage('./scratch');
-    /* localStorage API: https://www.npmjs.org/package/node-localstorage
-        length
-        setItem(key, value)
-        getItem(key)
-        removeItem(key)
-        key(n)
-        clear()
-    */
-    localStorage.clear();
-}
+/***** CLEAR OUT ANY EXISTING LOCAL STORAGE *****/
+/* localStorage API: https://www.npmjs.org/package/node-localstorage
+    length
+    setItem(key, value)
+    getItem(key)
+    removeItem(key)
+    key(n)
+    clear()
+*/
+localStorage.clear(); //you wouldn't do this if you wanted to preserve data on server restart
+/***** /CLEAR OUT ANY EXISTING LOCAL STORAGE *****/
 
 /***** HANDLE Uncaught Exceptions *****/
-process.on('uncaughtException', function(err) {
+process.on('uncaughtException', function (err) {
     console.error(err.stack);
 });
 
 //default success/failure callbacks - useful for Dev
 var success = function (data) {
-    console.error('success', data);
+    console.log('success', data);
 };
 
 var failure = function (data) {
@@ -42,8 +42,8 @@ var failure = function (data) {
 };
 /***** /HANDLE Uncaught Exceptions *****/
 
-/***** SETUP OAuth2.0 *****/
-var oauth2Creds     = appCreds.get().OAuth2,
+/***** SETUP OAuth2.0 AUTHENTICATION *****/
+var oauth2Creds     = appCreds.OAuth2,
     oauth2Client    = new googleapis.OAuth2Client(oauth2Creds.CLIENT_ID, oauth2Creds.CLIENT_SECRET, oauth2Creds.REDIRECT_URL);
 
 var grabToken = function (code, errorCallback, successCallback) {
@@ -56,7 +56,8 @@ var grabToken = function (code, errorCallback, successCallback) {
     });
 };
 
-var getUser = function (_oauth2Client, errorCallback, successCallback) {
+// get the Google Account User - we need this to store/retrieve user preferences
+var getUser = function (oauth2Client, errorCallback, successCallback) {
     googleapis
         .discover('oauth2', 'v2')
         .execute(function (err, client) {
@@ -67,8 +68,8 @@ var getUser = function (_oauth2Client, errorCallback, successCallback) {
 
             client
                 .oauth2.userinfo.get()
-                .withAuthClient(_oauth2Client)
-                .execute(function(err, results){
+                .withAuthClient(oauth2Client)
+                .execute(function (err, results) {
                     if (!!err) {
                         errorCallback(err);
                     } else {
@@ -76,15 +77,15 @@ var getUser = function (_oauth2Client, errorCallback, successCallback) {
                     }
                 });
         });
-}
-/***** /SETUP OAuth2.0 *****/
+};
+/***** /SETUP OAuth2.0 AUTHENTICATION *****/
 
 /***** SETUP AND START SERVER *****/
 // configure the server
-app.configure(function() {
+app.configure(function () {
     app.use(express.bodyParser());
     app.use(express.cookieParser());
-    app.use(express.session(appCreds.get().sessionParams));
+    app.use(express.session(appCreds.sessionParams));
     app.use(express.static(__dirname + '/public'));
     app.use(express.errorHandler({
         dumpExceptions: true,
@@ -93,9 +94,9 @@ app.configure(function() {
     app.use(app.router);
 });
 
-// define manual route overrides
+// ROUTES: define manual route overrides
 app.get('/login', function (req, res) {
-    if ('credentials' in req.session && req.session.credentials != null) {
+    if (req.session.hasOwnProperty('credentials') && req.session.credentials) {
         res.redirect('/#/mynews');
     } else {
         //if we don't have session credentials, go fetch them from Google
@@ -119,160 +120,82 @@ app.get('/logout', function (req, res) {
     res.redirect('/');
 });
 
-app.get('/insertHello', function (req, res) {
+app.get('/insertText/', function (req, res) {
+    glass.insertStory(oauth2Client, response.responseData.feed.entries[0].title,failure,success);
 
-
-    insertHello(failure, success);
     res.end();
 });
 
-//define API
+// API: define accessible API
 app.get('/user', function (req, res) {
-    res.setHeader('Content-Type', 'application/json');
     //return the user's profile
-    if ('user' in req.session && req.session.user != null) {
+    if (req.session.hasOwnProperty('user') && req.session.user) {
         res.json({
             user: req.session.user
         });
-    } else if ('credentials' in req.session && req.session.credentials != null) {
-        oauth2Client.credentials = req.session.credentials; //apply credentials
+        return;
+    }
+
+    if (req.session.hasOwnProperty('credentials') && req.session.credentials) {
+        oauth2Client.credentials = req.session.credentials; //apply credentials to session
 
         getUser(oauth2Client, failure, function (user) {
             req.session.user = user; //store the user in the current session
 
-            //*** RETURN user's id ***//
             res.json({
                 user: user
             });
         });
     } else {
-        res.send(500, 'Authentication needed');
+        res.send(401, 'Authorization needed');
     }
 });
 
 app.get('/user/:id/preferences', function (req, res) {
     //return saved preferences for req.params.id
-    if ('credentials' in req.session && req.session.credentials != null && 'user' in req.session && req.session.user.id === req.params.id) {
+    if (req.session.hasOwnProperty('credentials') && req.session.credentials && req.session.hasOwnProperty('user') && req.session.user.id === req.params.id) {
         try {
-            var prefsModel = {
-                freq: [
-                  {
-                    id: 0,
-                    label: 'Hourly',
-                    rule: {'minute':0},
-                    selected: false
-                  },
-                  {
-                    id: 1,
-                    label: 'Daily',
-                    rule: {'hour':8},
-                    selected: false
-                  },
-                  {
-                    id: 2,
-                    label: 'Often',
-                    rule: {'second':10},
-                    selected: false
-                  }
-                ]
-            },
+            var prefsModel = require('./server/models/preferences')(),
                 prefs = JSON.parse(localStorage.getItem(req.params.id));
             res.json(prefs || prefsModel);
-        } catch (e) {
-            res.send('Parsing error:', e);
+        } catch (err) {
+            res.send(500, 'JSON parsing error:', err);
         }
     } else {
-        res.send(500, 'Authentication needed');
+        res.send(401, 'Authorization needed');
     }
 });
 
 app.post('/user/:id/preferences', function (req, res) {
     //update saved preferences for req.params.id
-    if ('credentials' in req.session && req.session.credentials != null && 'user' in req.session && req.session.user.id === req.params.id) {
+    if (req.session.hasOwnProperty('credentials') && req.session.credentials && req.session.hasOwnProperty('user') && req.session.user.id === req.params.id) {
+        if (!req.body.hasOwnProperty('freq')) { //TODO: extend to accept 'topics'
+            res.send(400, 'Need preferences in POST');
+            return;
+        }
+
+        //TODO: temporarily create the model manually, ideally we would build this using the model
         var prefs = {
-          id: req.params.id,
-          freq: req.body.freq
+            id: req.params.id,
+            freq: req.body.freq,
+            topics: req.body.topics
         };
+
         try {
-            localStorage.setItem(req.params.id, JSON.stringify(prefs));
+            localStorage.setItem(req.params.id, JSON.stringify(prefs)); //store prefs
 
-            //**** CREATE SCHEDULER to insert news stories to Google Glass timeline ****//
-                //TODO: move this code into a separate file...
-                var perform = function (errorCallback, successCallback) {
-                    googleapis
-                        .discover('mirror', 'v1')
-                        .execute(function (err, client) {
-                            if (!!err)
-                                errorCallback(err);
-                            else
-                                successCallback(client);
-                        });
-                };
+            oauth2Client.credentials = req.session.credentials; //apply credentials to object
 
-                // send a simple news story timeline card with a delete option
-                var insertStory = function (title, errorCallback, successCallback) {
-                    oauth2Client.credentials = req.session.credentials; //apply credentials
-
-                    perform(errorCallback, function(client) {
-                        client
-                            .mirror.timeline.insert(
-                                {
-                                    'text': title,
-                                    'notification': {},
-                                    'menuItems': [
-                                        {'action': 'DELETE'}
-                                    ]
-                                }
-                            )
-                            .withAuthClient(oauth2Client)
-                            .execute(function (err, data) {
-                                if (!!err)
-                                    errorCallback(err);
-                                else
-                                    successCallback(data);
-                            });
-                    });
-                };
-
-                //scheduler docs: https://github.com/mattpat/node-schedule
-                var rule = {hour: 8}; //default rule
-                for (var i in prefs.freq) {
-                    if (prefs.freq[i].selected){
-                        rule = prefs.freq[i].rule;
-                    }
-                }
-                console.log('Creating scheduler for: ', rule);
-                var j = schedule.scheduleJob(rule, function() {
-                    var url = 'http://ajax.googleapis.com/ajax/services/feed/load?v=2.0&q=http://www.theverge.com/rss/frontpage&num=1';
-
-                    http.get(url, function(res) {
-                        var response = '';
-                        res.on('data', function (chunk) {
-                            //another chunk of data has been recieved, so append it to `response`
-                            response += chunk;
-                        });
-                        res.on('end', function () {
-                            //the whole response has been recieved
-                            try {
-                                response = JSON.parse(response);
-                                console.log('story', response.responseData.feed.entries[0].title);
-                                insertStory(response.responseData.feed.entries[0].title,failure,success);
-                            } catch(e) {
-                                failure(e);
-                            }
-                        });
-                    }).on('error', function(e) {
-                        failure(e);
-                    });
-                });
-            //**** /CREATE SCHEDULER to insert news stories to Google Glass timeline ****//
-
-            res.json(prefs || {});
-        } catch (e) {
-            res.send('Saving error:', e);
+            // CREATE SCHEDULER to insert news stories to Google Glass timeline
+            var scheduler = require('./server/submodules/scheduler')(http, glass, oauth2Client);
+            scheduler.scheduleNewsWithPrefs(prefs, failure, function () {
+                res.json(prefs);
+            });
+        } catch (err) {
+            res.send(500, 'Saving error:', err);
         }
     } else {
-        res.send(500, 'Authentication needed');
+        res.send(401, 'Authorization needed');
     }
 });
 

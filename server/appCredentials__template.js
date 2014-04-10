@@ -7,9 +7,11 @@
 //      2. Plug in your Google API credentials: client id, client secret, redirect url
 //      3. Rename this file to: appCredentials.js
 
-exports.get = function () {
+module.exports = (function () {
+    'use strict';
+
     var sessionParams = {
-        secret: 'YOUR_SESSION_SECRET', // TODO: make up some session secret */
+        secret: 'YOUR_SESSION_SECRET', // TODO: make up some complicated session secret yourself */
         cookie: {
             secure: false, // only set this to 'true' if you are using HTTPS
             maxAge: 60000
@@ -26,4 +28,4 @@ exports.get = function () {
         OAuth2: OAuth2,
         sessionParams: sessionParams
     };
-}
+}());
