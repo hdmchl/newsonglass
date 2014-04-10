@@ -27,7 +27,7 @@ module.exports = function (http, glass, oauth2Client) {
             }
         }
 
-        if (!!freq.rule || !!topic.name) {
+        if (!freq.rule || !topic.name) {
             errorCallback('freq or topic is undefined');
             return;
         }
