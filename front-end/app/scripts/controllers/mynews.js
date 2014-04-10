@@ -4,25 +4,10 @@ angular.module('newsApp')
   .controller('MynewsCtrl', function ($scope, $route, User, Preferences) {
     $scope.formData = {};
 
-    //TODO: this is just a stub for topics... doesn't do much yet.
-    $scope.topics = [
-      {
-        id: 0,
-        label: 'Technology'
-      },
-      {
-        id: 1,
-        label: 'Science'
-      },
-      {
-        id: 2,
-        label: 'Politics'
-      },
-    ];
-
     //set up preferences
     $scope.preferences = {
-      freq: []
+      freq: [],
+      topics: []
     };
 
     //get user and preferences
