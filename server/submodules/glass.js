@@ -19,10 +19,9 @@ module.exports = function (googleapis) {
             });
     },
 
-    /* @private */
+    /* @public */
     // send a simple textual news story, a timeline card using an inbuilt delete option
         insertStory = function (oauth2Client, title, errorCallback, successCallback) {
-            console.log('Inserting story: ', title);
             performRequest(errorCallback, function (client) {
                 client
                     .mirror.timeline.insert(
