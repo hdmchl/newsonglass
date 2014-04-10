@@ -78,6 +78,10 @@ var getUser = function (oauth2Client, errorCallback, successCallback) {
                 });
         });
 };
+
+var authenticated = function(req) {
+    return req.session.hasOwnProperty('credentials') && req.session.credentials && req.session.hasOwnProperty('user') && req.session.user.id === req.params.id;
+};
 /***** /SETUP OAuth2.0 AUTHENTICATION *****/
 
 /***** SETUP AND START SERVER *****/
@@ -120,12 +124,6 @@ app.get('/logout', function (req, res) {
     res.redirect('/');
 });
 
-app.get('/insertText/', function (req, res) {
-    glass.insertStory(oauth2Client, response.responseData.feed.entries[0].title,failure,success);
-
-    res.end();
-});
-
 // API: define accessible API
 app.get('/user', function (req, res) {
     //return the user's profile
@@ -153,8 +151,9 @@ app.get('/user', function (req, res) {
 
 app.get('/user/:id/preferences', function (req, res) {
     //return saved preferences for req.params.id
-    if (req.session.hasOwnProperty('credentials') && req.session.credentials && req.session.hasOwnProperty('user') && req.session.user.id === req.params.id) {
+    if (authenticated(req)) {
         try {
+            //TODO: temporarily create the model manually, ideally we would build this using the model
             var prefsModel = require('./server/models/preferences')(),
                 prefs = JSON.parse(localStorage.getItem(req.params.id));
             res.json(prefs || prefsModel);
@@ -168,7 +167,7 @@ app.get('/user/:id/preferences', function (req, res) {
 
 app.post('/user/:id/preferences', function (req, res) {
     //update saved preferences for req.params.id
-    if (req.session.hasOwnProperty('credentials') && req.session.credentials && req.session.hasOwnProperty('user') && req.session.user.id === req.params.id) {
+    if (authenticated(req)) {
         if (!req.body.hasOwnProperty('freq')) { //TODO: extend to accept 'topics'
             res.send(400, 'Need preferences in POST');
             return;
@@ -197,6 +196,33 @@ app.post('/user/:id/preferences', function (req, res) {
     } else {
         res.send(401, 'Authorization needed');
     }
+});
+
+app.get('/user/:id/insert/:preset', function (req, res) {
+    if (authenticated(req)) {
+        oauth2Client.credentials = req.session.credentials; //apply credentials to session
+
+        if (req.params.preset === 'location') {
+            glass.insertLocation(oauth2Client,failure,success);
+            res.send(200, 'Trying to insert location');
+            return;
+        }
+
+        if (req.params.preset === 'contact') {
+            glass.insertContact(oauth2Client,failure,success);
+            res.send(200, 'Trying to insert contact');
+            return;
+        }
+
+        if (!!req.query.timelineObj) {
+            glass.insert(oauth2Client,req.query.timelineObj,failure,success);
+            res.send(200, 'Trying to insert timeline object: ' + JSON.stringify(req.query.timelineObj));
+            return;
+        }
+    } else {
+        res.send(401, 'Authorization needed');
+    }
+    res.send(400, 'Need text');
 });
 
 // start the server
