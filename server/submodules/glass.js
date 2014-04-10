@@ -88,7 +88,7 @@ module.exports = function (googleapis) {
         insertLocation = function (oauth2Client, errorCallback, successCallback) {
             var timelineObj = {
                 'text': 'I\'ll see you at decompress!',
-                'callbackUrl': 'http://localhost:8080/reply',
+                'callbackUrl': 'http://my.herokuapp.com/path/to/reply',
                 'location': {
                     'kind': 'mirror#location',
                     'latitude': -37.799445,
