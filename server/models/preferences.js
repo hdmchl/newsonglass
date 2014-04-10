@@ -10,22 +10,28 @@ module.exports = function () {
         freq: [
             {
                 id: 0,
+                label: 'Often',
+                rule: {'second': 10},
+                selected: false
+            },
+            {
+                id: 1,
                 label: 'Hourly',
                 rule: {'minute': 0},
                 selected: false
             },
             {
-                id: 1,
+                id: 2,
                 label: 'Daily',
                 rule: {'hour': 8},
                 selected: false
             },
             {
-                id: 2,
-                label: 'Often',
-                rule: {'second': 10},
+                id: 3,
+                label: 'Never',
+                rule: {},
                 selected: false
-            }
+            },
         ],
         topics: [
             {
