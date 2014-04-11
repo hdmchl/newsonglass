@@ -4,6 +4,7 @@ appCredentials.js
 
 #the front-end grunt project will create a 'public' folder that contains the webapp
 #public - we need to commit this to git, if we want it to run on Heroku
+/front-end/public
 
 ### Node.js ###
 # Logs
