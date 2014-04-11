@@ -9,10 +9,23 @@ var appName         = 'NewsOnGlass',
     app             = express(),
     http            = require('http'),
     googleapis      = require('googleapis'),
-    appCreds        = require('./server/appCredentials'), //see appCredentials__template.js
     LocalStorage    = require('node-localstorage').LocalStorage,
     localStorage    = new LocalStorage('./scratch'),
     glass           = require('./server/submodules/glass')(googleapis);
+
+// include app credentials, based on environment (this is to avoid committing OAuth secrest to git)
+var appCreds = (function(){
+    switch(process.env.NODE_ENV){
+        case 'dev':
+            return require('./server/appCredentials'); // see appCredentials__template.js
+
+        case 'prod':
+            return require('./server/appCredentials_env');
+
+        default:
+            return false;
+    }
+}());
 
 /***** CLEAR OUT ANY EXISTING LOCAL STORAGE *****/
 /* localStorage API: https://www.npmjs.org/package/node-localstorage
