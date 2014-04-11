@@ -8,7 +8,6 @@ var appName         = 'NewsOnGlass',
     express         = require('express'),
     app             = express(),
     http            = require('http'),
-    server          = http.createServer(app),
     googleapis      = require('googleapis'),
     appCreds        = require('./server/appCredentials'), //see appCredentials__template.js
     LocalStorage    = require('node-localstorage').LocalStorage,
@@ -236,14 +235,15 @@ app.get('/user/:id/listTimeline', function (req, res) {
         });
     } else {
         res.send(401, 'Authorization needed');
-    };
+    }
 });
 
 // start the server
 try {
     app.set('port', (process.env.PORT || 8080));
-    server.listen(app.get('port'));
-    console.log('Server is listening on port: ' + app.get('port'));
+    app.listen(app.get('port'), function() {
+        console.log('Server is listening on port: ' + app.get('port'));
+    });
 } catch (err) {
     console.error('Server didn\'t start: \n' + err);
 }
