@@ -1,0 +1,8 @@
+<div class="header"><ul class="nav nav-pills pull-right"><li><a ng-href="#/">Home</a></li><li class="active"><a ng-href="#/mynews">My News</a></li><li><a ng-href="/logout">Logout</a></li></ul><h3 class="text-muted">News on Glass</h3></div><div class="row marketing"><h1>Preferences</h1><p ng-hide="preferences.freq.length">Loading...</p><div ng-show="preferences.freq.length"><form ng-submit="submitForm()"><div class="row"><!-- <div class="col-sm-6">
+                    <h2>Topics</h2>
+                    <div class="checkbox" ng-repeat="topic in topics">
+                        <label>
+                            <input type="checkbox" value="{{topic.id}}" ng-model="formData.topid">{{topic.label}}
+                        </label>
+                    </div>
+                </div> --><div class="col-sm-6"><h2>Frequency</h2><div class="radio" ng-repeat="freq in preferences.freq"><label><input type="radio" name="frequencies" id="{{freq.id}}" value="{{freq.id}}" ng-checked="freq.selected" ng-model="formData.freq">{{freq.label}}</label></div></div></div><div class="row"><div class="col-sm-6"><button type="submit" class="btn btn-success">Subscribe</button></div></div></form></div></div><div class="footer"><p>Made with love by <a href="http://twitter.com/hadi_michael">@hadi_michael</a></p></div>
