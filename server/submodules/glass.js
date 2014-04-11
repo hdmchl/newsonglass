@@ -127,12 +127,30 @@ module.exports = function (googleapis) {
             };
 
             insert(oauth2Client, timelineObj, errorCallback, successCallback);
+        },
+
+    /* @public */
+    // get a list of timeline items, relevant to this app
+        listTimeline = function (oauth2Client, errorCallback, successCallback) {
+            performRequest(errorCallback, function (client) {
+                client
+                    .mirror.timeline.list()
+                    .withAuthClient(oauth2Client)
+                    .execute(function (err, response) {
+                        if (!!err) {
+                            errorCallback(err);
+                        } else {
+                            successCallback(response);
+                        }
+                    });
+            });
         };
 
     return {
         insert: insert,
         insertStory: insertStory,
         insertLocation: insertLocation,
-        insertContact: insertContact
+        insertContact: insertContact,
+        listTimeline: listTimeline
     };
 };
