@@ -219,10 +219,11 @@ app.get('/user/:id/insert/:preset', function (req, res) {
             res.send(200, 'Trying to insert timeline object: ' + JSON.stringify(req.query.timelineObj));
             return;
         }
+
+        res.send(400, 'Need text');
     } else {
         res.send(401, 'Authorization needed');
     }
-    res.send(400, 'Need text');
 });
 
 // start the server
