@@ -226,9 +226,22 @@ app.get('/user/:id/insert/:preset', function (req, res) {
     }
 });
 
+app.get('/user/:id/listTimeline', function (req, res) {
+    if (authenticated(req)) {
+        oauth2Client.credentials = req.session.credentials; //apply credentials to session
+
+        glass.listTimeline(oauth2Client,failure, function(timeline) {
+            console.log(timeline);
+            res.send(200, 'Timeline: ' + JSON.stringify(timeline));
+        });
+    } else {
+        res.send(401, 'Authorization needed');
+    };
+});
+
 // start the server
 try {
-    app.set('port', 8080);
+    app.set('port', (process.env.PORT || 8080));
     server.listen(app.get('port'));
     console.log('Server is listening on port: ' + app.get('port'));
 } catch (err) {
