@@ -1,20 +1,35 @@
 {
-    "name": "news-on-glass",
-    "version": "0.0.1",
-    "private": true,
-    "author": "hadimichael@gmail.com",
-    "bugs": "hadimichael@gmail.com",
-    "contributors": "hadimichael@gmail.com",
-    "keywords": ["glass", "mirror api", "news"],
-    "scripts": {
-        "start": "node app.js"
-    },
-    "dependencies": {
-        "express": "3.5.1",
-        "googleapis": "0.7.0",
-        "node-localstorage": ""
-    },
-    "engines": {
-        "node": "0.10.26"
-    }
+  "name": "news-on-glass",
+  "version": "0.0.1",
+  "private": true,
+  "author": "hadimichael@gmail.com",
+  "bugs": {
+    "email": "hadimichael@gmail.com"
+  },
+  "contributors": "hadimichael@gmail.com",
+  "keywords": [
+    "glass",
+    "mirror api",
+    "news"
+  ],
+  "scripts": {
+    "start": "node app.js"
+  },
+  "dependencies": {
+    "express": "3.5.1",
+    "googleapis": "0.7.0",
+    "node-localstorage": ""
+  },
+  "engines": {
+    "node": "0.10.26"
+  },
+  "description": "News on Glass is a Google Glass app for receiving news updates.",
+  "main": "app.js",
+  "devDependencies": {},
+  "repository": {
+    "type": "git",
+    "url": "https://hadimichael@github.com/hadimichael/newsonglass.git"
+  },
+  "license": "MIT",
+  "homepage": "https://github.com/hadimichael/newsonglass"
 }
