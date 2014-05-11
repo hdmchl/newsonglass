@@ -13,14 +13,14 @@ var appName         = 'NewsOnGlass',
     localStorage    = new LocalStorage('./scratch'),
     glass           = require('./server/submodules/glass')(googleapis);
 
-// include app credentials, based on environment (this is to avoid committing OAuth secrest to git)
+// include app credentials, based on environment (this is to avoid committing OAuth secret to git)
 var appCreds = (function(){
     switch(process.env.NODE_ENV){
         case 'dev':
-            return require('./server/appCredentials'); // see appCredentials__template.js
+            return require('./server/credentials/appCredentials'); // see appCredentials__template.js
 
         case 'prod':
-            return require('./server/appCredentials_env');
+            return require('./server/credentials/appCredentials_env');
 
         default:
             return false;
@@ -36,7 +36,7 @@ var appCreds = (function(){
     key(n)
     clear()
 */
-localStorage.clear(); //you wouldn't do this if you wanted to preserve data on server restart
+localStorage.clear(); //you wouldn't do this if you wanted to persist data on server restart
 /***** /CLEAR OUT ANY EXISTING LOCAL STORAGE *****/
 
 /***** HANDLE Uncaught Exceptions *****/
